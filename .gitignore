@@ -5,6 +5,14 @@
 *.jks
 *.p12
 *.mobileprovision
+*.ipa
+*.pem
+*.key
+*.zip
+*.env
+.env
+/config/source.json
+/config/servers.txt
 local.properties
 **/build/
 **/.gradle/
