@@ -1,0 +1,56 @@
+name: RouterSetup
+options:
+  deploymentTarget:
+    iOS: "15.0"
+  createIntermediateGroups: true
+targets:
+  RouterSetup:
+    type: application
+    platform: iOS
+    sources: [App]
+    info:
+      path: Generated/RouterSetup-Info.plist
+      properties:
+        CFBundleDisplayName: Настройка роутера
+        LSRequiresIPhoneOS: true
+        UILaunchScreen: {}
+        NSLocalNetworkUsageDescription: Приложение подключается к выбранному вами домашнему роутеру для проверки и настройки VPN.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+          NSExceptionDomains:
+            "127.0.0.1":
+              NSExceptionAllowsInsecureHTTPLoads: true
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: net.vpn013.routersetup
+        PRODUCT_NAME: RouterSetup
+        SWIFT_VERSION: "5.0"
+        SWIFT_OBJC_BRIDGING_HEADER: App/EngineBridge.h
+        CURRENT_PROJECT_VERSION: "1"
+        MARKETING_VERSION: "1.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+    dependencies:
+      - framework: Frameworks/Mobile.xcframework
+        embed: false
+  RouterSetupUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [UITests]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: net.vpn013.routersetup.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: "5.0"
+        TEST_TARGET_NAME: RouterSetup
+    dependencies:
+      - target: RouterSetup
+schemes:
+  RouterSetup:
+    build:
+      targets:
+        RouterSetup: all
+        RouterSetupUITests: [test]
+    test:
+      targets: [RouterSetupUITests]

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="color-scheme" content="light"><title>VPN на роутере</title><link href="/app.css" rel="stylesheet"></head>
+<body>
+<header><div class="brandmark" aria-hidden="true"><i></i><i></i><i></i></div><b>VPN на роутере</b><span>Keenetic / Netcraze</span></header>
+<main>
+ <aside aria-label="Этапы настройки"><div class="aside-inner"><p class="hint">Установка</p><ol id="steps"><li aria-current="step">Роутер</li><li>Подписка</li><li>Результат</li></ol><p class="local">Подключитесь к домашней сети роутера.</p></div></aside>
+ <section class="card">
+  <div id="connect">
+   <h1>Подключение к роутеру</h1>
+   <p class="lead">Укажите адрес роутера и порт SSH для Entware. На следующем шаге приложение проверит совместимость.</p>
+   <form id="addressForm"><div class="cols"><label>Адрес роутера<input id="host" value="192.168.1.1" inputmode="decimal" autocomplete="off" autocapitalize="none" spellcheck="false" required></label><label>Порт SSH<input id="port" value="222" inputmode="numeric" type="number" min="1" max="65535" required></label></div><button>Проверить роутер</button></form>
+   <form id="trustForm" hidden><p>Сверьте отпечаток SSH с сохранённым отпечатком роутера в вашем SSH-клиенте.</p><output id="fingerprint"></output><label>Пользователь Entware<input id="user" value="root" autocapitalize="none" spellcheck="false" autocomplete="off" required></label><label>Пароль Entware<input id="password" type="password" autocomplete="off" required></label><div class="actions"><button>Доверять и войти</button><button class="secondary" type="button" id="backHost">Изменить адрес</button></div></form>
+   <details><summary>Первая настройка роутера</summary><p>Для установки на самом роутере нужны компоненты «Клиент прокси» и WireGuard, а также Entware на постоянном накопителе. Это может быть USB-диск, M.2 или поддерживаемое моделью встроенное хранилище. Порт SSH указан в журнале запуска Entware.</p></details>
+   <div class="gateway-choice"><p>На роутере нет Entware? Автовыбор серверов может выполнять постоянно включённый компьютер или NAS.</p><button class="secondary" type="button" id="openGateway">Настроить отдельный шлюз</button></div>
+  </div>
+  <div id="subscription" hidden>
+   <h1>Автоматическая подписка</h1><p class="lead">Вставьте ключ со списком серверов из Happ, INCY или от вашего провайдера.</p>
+   <p class="statusline" id="routerInfo"></p>
+   <form id="applyForm"><label>Название профиля<input id="label" value="Моя VPN-подписка" maxlength="64" required></label><label>Ключ подписки<textarea id="key" rows="3" autocapitalize="none" spellcheck="false" autocomplete="off" required placeholder="Ссылка подписки или список профилей"></textarea></label><details class="headers"><summary>Параметры от провайдера</summary><label>User-Agent<input id="ua" autocomplete="off" autocapitalize="none" spellcheck="false"></label><label>HWID, выданный для этого роутера<input id="hwid" type="password" autocomplete="off"></label></details><label class="check"><input type="checkbox" id="install" checked><span>Установить недостающие компоненты AWG Manager на совместимый роутер</span></label><p class="small">Роутер будет проверять доступность серверов и выбирать выход для новых соединений.</p><div class="actions"><button>Добавить и проверить</button><button type="button" class="secondary" id="backRouter">Сменить роутер</button></div></form>
+  </div>
+  <div id="result" hidden>
+   <h1>Подписка на роутере</h1><p class="lead" id="outcome"></p><dl id="metrics"></dl><p id="routingHelp"></p><div class="actions"><button type="button" id="attach">Подключить это устройство к VPN</button><button type="button" class="secondary" id="again">Добавить ещё подписку</button></div>
+  </div>
+  <div id="gateway" hidden>
+   <h1>Отдельный VPN-шлюз</h1>
+   <p class="lead">Шлюз с Docker Compose будет выбирать сервер из подписки. Роутер можно подключить по SOCKS5 или через отдельный Ethernet-порт Linux-шлюза.</p>
+   <form id="gatewayForm">
+    <div class="cols"><label>Локальный IPv4 компьютера или NAS<input id="gatewayIp" required placeholder="192.168.1.20" inputmode="decimal" autocomplete="off"></label><label>Порт SOCKS5<input id="gatewayPort" type="number" value="1080" min="1" max="65535" required></label></div>
+    <label>Ключ подписки<textarea id="gatewayKey" rows="3" placeholder="Ссылка подписки или список серверов" autocapitalize="none" spellcheck="false" autocomplete="off" required></textarea></label>
+    <details class="headers"><summary>Параметры от провайдера</summary><label>User-Agent<input id="gatewayUA" autocomplete="off" spellcheck="false"></label><label>HWID шлюза, выданный провайдером<input id="gatewayHWID" type="password" autocomplete="off"></label></details>
+    <p class="small">Архив содержит ключ подписки и новый пароль SOCKS5. Сохраните его для себя и перенесите на шлюз.</p>
+    <div class="actions"><button>Сохранить архив шлюза</button><button type="button" class="secondary" id="closeGateway">Назад к роутеру</button></div>
+   </form>
+   <details><summary>Как подключить роутер</summary><p>Закрепите IP шлюза и распакуйте архив на компьютере с Docker Compose. Порядок запуска указан в README.md. Если на роутере есть «Клиент прокси», добавьте в «Другие подключения» SOCKS5 из архива и назначьте его нужным устройствам.</p><p>Если роутер поддерживает только обычный Ethernet WAN, используйте инструкцию ethernet/README.md. Понадобятся Linux-шлюз с отдельным Ethernet-портом и возможность задать статический IPv4 на WAN.</p></details>
+  </div>
+  <p role="status" id="notice" hidden></p>
+  <button class="exit" type="button" id="quit" hidden>Завершить сеанс</button>
+ </section>
+</main>
+<script src="/app.js"></script><script src="/gateway.js"></script></body></html>

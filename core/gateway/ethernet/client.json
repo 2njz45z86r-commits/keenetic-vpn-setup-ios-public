@@ -1,0 +1,26 @@
+{
+  "log": {"level": "error"},
+  "dns": {
+    "servers": [{"type": "udp", "tag": "compose-dns", "server": "127.0.0.11"}]
+  },
+  "inbounds": [{
+    "type": "tun",
+    "tag": "router-wan",
+    "interface_name": "kvg-tun",
+    "address": ["198.18.247.1/30"],
+    "mtu": 1500,
+    "stack": "gvisor",
+    "auto_route": false
+  }],
+  "outbounds": [{
+    "type": "socks",
+    "tag": "through-subscription",
+    "server": "gateway",
+    "server_port": 1080,
+    "version": "5",
+    "username": "keenetic-cable",
+    "password": "@PASSWORD@",
+    "domain_resolver": {"server": "compose-dns", "strategy": "ipv4_only"}
+  }],
+  "route": {"final": "through-subscription"}
+}

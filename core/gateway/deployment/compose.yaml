@@ -1,0 +1,25 @@
+services:
+  gateway:
+    build: ./service
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    # Read private 0600 files owned by the user who extracted the archive.
+    # Their bind mount and the container root filesystem remain read-only.
+    cap_add: [DAC_OVERRIDE]
+    security_opt: [no-new-privileges:true]
+    ports:
+      - "@LAN@:@PORT@:1080/tcp"
+      - "@LAN@:@PORT@:1080/udp"
+    volumes:
+      - ./config:/private:ro
+      - gateway-data:/state
+    tmpfs: [/tmp]
+    healthcheck:
+      test: ["CMD", "python", "-B", "/app/gateway.py", "status"]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+      start_period: 30s
+volumes:
+  gateway-data:

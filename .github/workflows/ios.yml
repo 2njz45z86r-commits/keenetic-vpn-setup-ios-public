@@ -1,0 +1,67 @@
+name: iOS simulator
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  simulator:
+    runs-on: macos-15
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Check shared Go code
+        run: go test ./...
+      - name: Build native framework and generate Xcode project
+        run: |
+          command -v xcodegen >/dev/null || brew install xcodegen
+          bash platform/ios/build.sh
+      - name: Build unsigned iPhone application
+        working-directory: platform/ios
+        run: |
+          xcodebuild -project RouterSetup.xcodeproj -scheme RouterSetup -configuration Release \
+            -destination 'generic/platform=iOS' -derivedDataPath DeviceBuild \
+            CODE_SIGNING_ALLOWED=NO build
+          mkdir -p Unsigned/Payload
+          ditto DeviceBuild/Build/Products/Release-iphoneos/RouterSetup.app Unsigned/Payload/RouterSetup.app
+          (cd Unsigned && ditto -c -k --keepParent Payload ../RouterSetup-unsigned.ipa)
+          unzip -t RouterSetup-unsigned.ipa
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iOS-device-unsigned
+          path: platform/ios/RouterSetup-unsigned.ipa
+          if-no-files-found: error
+      - name: Run the iPhone interface test
+        working-directory: platform/ios
+        shell: bash
+        run: |
+          set -euo pipefail
+          simulator="$(python3 - <<'PY'
+          import json, subprocess
+          devices=json.loads(subprocess.check_output(["xcrun","simctl","list","devices","available","-j"]))["devices"]
+          matches=[d["udid"] for runtime, items in devices.items() if ".iOS-" in runtime for d in items if d["name"].startswith("iPhone") and d["isAvailable"]]
+          if not matches: raise SystemExit("No available iPhone simulator")
+          print(matches[-1])
+          PY
+          )"
+          xcodebuild test -project RouterSetup.xcodeproj -scheme RouterSetup \
+            -destination "platform=iOS Simulator,id=$simulator" -parallel-testing-enabled NO \
+            -derivedDataPath DerivedData -resultBundlePath TestResults.xcresult CODE_SIGNING_ALLOWED=NO
+      - name: Archive simulator app
+        working-directory: platform/ios
+        run: ditto -c -k --sequesterRsrc --keepParent DerivedData/Build/Products/Debug-iphonesimulator/RouterSetup.app RouterSetup-simulator.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iOS-simulator-app
+          path: platform/ios/RouterSetup-simulator.zip
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: XCTest-results
+          path: platform/ios/TestResults.xcresult
+          if-no-files-found: ignore

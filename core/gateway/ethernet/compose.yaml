@@ -1,0 +1,49 @@
+services:
+  gateway:
+    networks:
+      default: {}
+      cable_bus: {}
+  ethernet-wan:
+    build: ./ethernet/image
+    restart: unless-stopped
+    read_only: true
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [NET_ADMIN, NET_RAW, DAC_READ_SEARCH]
+    devices: ["/dev/net/tun:/dev/net/tun"]
+    volumes:
+      - ./ethernet/client.json:/run/keenetic-cable-config.json:ro
+    tmpfs: [/tmp, /run/xtables]
+    environment:
+      XTABLES_LOCKFILE: /run/xtables/lock
+    sysctls:
+      net.ipv4.ip_forward: "1"
+      net.ipv4.conf.all.rp_filter: "0"
+      net.ipv4.conf.default.rp_filter: "0"
+      net.ipv6.conf.all.disable_ipv6: "1"
+      net.ipv6.conf.default.disable_ipv6: "1"
+    depends_on:
+      gateway:
+        condition: service_healthy
+    networks:
+      cable_bus: {}
+      wan_cable:
+        ipv4_address: 192.168.247.1
+    healthcheck:
+      test: ["CMD-SHELL", "test \"$$(cat /proc/sys/net/ipv4/ip_forward)\" = 1 && ip -4 route show table 247 | grep -q '^default dev kvg-tun'"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+networks:
+  cable_bus:
+    internal: true
+  wan_cable:
+    driver: macvlan
+    internal: true
+    driver_opts:
+      parent: "${KEENETIC_ETHERNET_NIC:?Choose a dedicated Ethernet interface with setup.sh}"
+    ipam:
+      config:
+        - subnet: 192.168.247.0/30
+          # Docker reserves .2 in IPAM. The physical router uses it on the wire.
+          gateway: 192.168.247.2

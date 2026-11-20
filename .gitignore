@@ -1,0 +1,13 @@
+/dist/
+*.apk
+*.exe
+*.keystore
+*.jks
+*.p12
+*.mobileprovision
+local.properties
+**/build/
+**/.gradle/
+**/DerivedData/
+**/Frameworks/
+*.xcresult/
